@@ -5,7 +5,7 @@ from pystyle import *
 from Utils.Giveaway_Updater import Giveaway_Updater
 from Handler.load_commands import load_handler_commands
 from Handler.load_utils import load_handler_utils
-
+from Utils.Button import Button
 
 
 client = commands.Bot(command_prefix=PREFIX, intents=discord.Intents.all(), help_command=None)
@@ -27,6 +27,15 @@ async def on_ready():
     cursor.execute("CREATE TABLE IF NOT EXISTS Giveaway_Entry (user_id INTEGER, message_id INTEGER)")
     cursor.execute("CREATE TABLE IF NOT EXISTS Giveaway_Running (unique_id INTEGER, guild_id INTEGER, channel_id INTEGER, prize TEXT, hostedby INTEGER, total REAL, running INTEGER, entries INTEGER, winners INTEGER, PRIMARY KEY (unique_id))")
     cursor.execute("CREATE TABLE IF NOT EXISTS Giveaways_Ended (unique_id INTEGER, guild_id INTEGER, channel_id INTEGER, prize TEXT, hostedby INTEGER, total REAL, winners TEXT)")
+    cursor.execute("SELECT unique_id, channel_id, prize, total FROM Giveaway_Running WHERE running = ?", (1,))
+    res = cursor.fetchall()
+
+    for giveaway in res:
+        channel = await client.fetch_channel(giveaway[1])
+        message = await channel.fetch_message(giveaway[0])
+        button_view = Button(client)
+        await message.edit(view=button_view)
+
     cursor.close()
     client.db.commit()
     Giveaway_Updater_Task.start()
